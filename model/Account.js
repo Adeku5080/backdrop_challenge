@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const AccountSchema = new mongoose.Schema({
   user_account_number: {
-    type: Interger,
+    type: Number,
   },
   user_bank_code: {
     type: String,
@@ -11,3 +11,5 @@ const AccountSchema = new mongoose.Schema({
     type: String,
   },
 });
+
+module.exports = mongoose.model("Account",AccountSchema);
