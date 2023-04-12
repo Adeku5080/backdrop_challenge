@@ -49,7 +49,7 @@ const UserType = new GraphQLObjectType({
 const AccountType = new graphql.GraphQLObjectType({
   name: "Account",
   fields: () => ({
-    user_account_number: { type: GraphQLInt },
+    user_account_number: { type: GraphQLString },
     user_bank_code: { type: GraphQLString },
     user_account_name: { type: GraphQLString },
   }),
@@ -70,38 +70,67 @@ const RootQuery = new GraphQLObjectType({
       type: new GraphQLList(AccountType),
       args: {
         user_bank_code: { type: GraphQLString },
-        user_account_number: { type: GraphQLInt },
+        user_account_number: { type: GraphQLString },
       },
       async resolve(parents, args) {
-        const account = await AccountModel.findOne({
-          user_bank_code: args.user_bank_code,
-          user_account_number: args.user_account_number,
-        });
-       console.log(account);
+        try {
+          const accountName = await AccountModel.find({
+            user_bank_code: args.user_bank_code,
+            user_account_number: args.user_account_number,
+          });
+
+          if (accountName) {
+            return accountName;
+          }
+
+          if (!accountName) {
+            const { data } = await resolveAcct(
+              args.user_account_number,
+              args.user_bank_code
+            );
+            console.log(data);
+
+            return data.account_name;
+          }
+        } catch (err) {
+          console.log(err);
+        }
       },
     },
   },
 });
 
+//mutation
 const Mutation = new GraphQLObjectType({
   name: "Mutation",
   fields: {
     createUser: {
       type: UserType,
       args: {
-        firstName: { type: GraphQLString },
-        LastName: { type: GraphQLString },
-        Email: { type: GraphQLString },
-        Password: { type: GraphQLString },
+        name: { type: GraphQLString },
+        email: { type: GraphQLString },
       },
-      resolve(parents, args) {
-        const user = UserModel.create();
+      async resolve(parents, args) {
+        const user = await UserModel.create({
+          name: args.name,
+          email: args.email,
+        });
+
+        const tokenUser = {
+          name: user.name,
+          id: user._id,
+        };
+
+        const token = jwt.sign(tokenUser, process.env.JWT_SECRET, {
+          expiresIn: process.env.JWT_LIFETIME,
+        });
+        return token;
       },
     },
     createAccount: {
       type: AccountType,
       args: {
-        user_account_number: { type: GraphQLInt },
+        user_account_number: { type: GraphQLString },
         user_bank_code: { type: GraphQLString },
         user_account_name: { type: GraphQLString },
       },
@@ -115,7 +144,7 @@ const Mutation = new GraphQLObjectType({
           args.user_account_name.toLowerCase(),
           resolvedAcct.account_name.toLowerCase()
         );
-        console.log(distance, "LD");
+        console.log(distance);
         if (distance <= 2) {
           try {
             const account = await AccountModel.create({
@@ -123,6 +152,7 @@ const Mutation = new GraphQLObjectType({
               user_bank_code: args.user_bank_code,
               user_account_name: args.user_account_name,
             });
+            return account;
           } catch (err) {
             console.log(err);
           }

@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const AccountSchema = new mongoose.Schema({
   user_account_number: {
-    type: Number,
+    type: String,
   },
   user_bank_code: {
     type: String,
