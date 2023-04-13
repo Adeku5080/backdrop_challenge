@@ -6,6 +6,8 @@ const AccountModel = require("./model/Account");
 const UserModel = require("./model/User");
 const levenshtein = require("fast-levenshtein");
 const connect = require("./database/connect");
+const jwt = require("jsonwebtoken");
+const authMiddleware = require("./middleware/auth");
 const graphql = require("graphql");
 const {
   GraphQLObjectType,
@@ -38,11 +40,8 @@ async function resolveAcct(account_no, bank_code) {
 const UserType = new GraphQLObjectType({
   name: "User",
   fields: () => ({
-    id: { type: GraphQLInt },
-    firstName: { type: GraphQLString },
-    lastName: { type: GraphQLString },
+    name: { type: GraphQLString },
     email: { type: GraphQLString },
-    Password: { type: GraphQLString },
   }),
 });
 
@@ -104,6 +103,7 @@ const RootQuery = new GraphQLObjectType({
 const Mutation = new GraphQLObjectType({
   name: "Mutation",
   fields: {
+    //create user mutation
     createUser: {
       type: UserType,
       args: {
@@ -124,9 +124,14 @@ const Mutation = new GraphQLObjectType({
         const token = jwt.sign(tokenUser, process.env.JWT_SECRET, {
           expiresIn: process.env.JWT_LIFETIME,
         });
-        return token;
+        return {
+          user,
+          token,
+        };
       },
     },
+
+    //create account mutation
     createAccount: {
       type: AccountType,
       args: {
@@ -144,7 +149,6 @@ const Mutation = new GraphQLObjectType({
           args.user_account_name.toLowerCase(),
           resolvedAcct.account_name.toLowerCase()
         );
-        console.log(distance);
         if (distance <= 2) {
           try {
             const account = await AccountModel.create({
@@ -164,6 +168,7 @@ const Mutation = new GraphQLObjectType({
 
 const schema = new GraphQLSchema({ query: RootQuery, mutation: Mutation });
 
+// app.use(authMiddleware);
 app.use(
   "/graphql",
   graphqlHTTP({
