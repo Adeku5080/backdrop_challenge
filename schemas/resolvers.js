@@ -3,9 +3,8 @@ const User = require("../model/User");
 const jwt = require("jsonwebtoken");
 const levenshtein = require("fast-levenshtein");
 const axios = require("axios");
-const checkAuth = require('../utils/check-auth')
+const checkAuth = require("../utils/check-auth");
 require("dotenv").config();
-
 
 const token = "sk_test_7edfc900ca6f0d9d838f40f77b843898dff18e79";
 
@@ -31,7 +30,7 @@ const resolvers = {
         user_bank_code,
         user_account_number,
       });
-        
+
       if (account) {
         return {
           user_account_name: account.user_account_name,
@@ -44,8 +43,8 @@ const resolvers = {
           user_bank_code
         );
         return {
-          user_account_name :resolvedAcct.account_name
-        }
+          user_account_name: resolvedAcct.account_name,
+        };
       }
     },
   },
@@ -74,8 +73,7 @@ const resolvers = {
     },
 
     createAccount: async (parent, args, context, info) => {
-      const user = checkAuth(context)
-      console.log(user,'user gotten from payload');
+      const user = checkAuth(context);
       const { user_account_number, user_bank_code, user_account_name } =
         args.account;
 
@@ -88,7 +86,6 @@ const resolvers = {
         user_account_name.toLowerCase(),
         resolvedAcct.account_name.toLowerCase()
       );
-      console.log(distance, "leven distance");
 
       if (distance <= 2) {
         const account = await Account.create({
@@ -96,6 +93,17 @@ const resolvers = {
           user_bank_code,
           user_account_name,
         });
+
+        const updatedUser = await User.findOneAndUpdate(
+          { _id: user.id },
+          { is_verified: true },
+          {
+            new: true,
+            runValidators: true,
+          }
+        );
+        console.log(updatedUser, "updated user");
+
         return {
           user_account_name: account.user_account_name,
         };
