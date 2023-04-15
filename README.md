@@ -8,9 +8,13 @@ $ cd backdrop_challenge
 $ npm install
 ```
 
-Pure Levenshtein Distance algorithm might be more effective in this scenario because unlike Damerau-levenshtein Distance that includes an extra edit operation (transposition),which is not really needed for our use case.Using Levenshtein distance in our use case allows our application to be more effective and faster
+Pure Levenshtein Distance algorithm might be more effective in this scenario because unlike Damerau-levenshtein Distance that includes an extra edit operation (transposition),the pure Levenshtain distance only requires three edit operations (insertions,deletions,substitutions) which less computationally expensive for our use case.Using Levenshtein distance in our use case allows our application to be more effective and faster.
+
+
+
 
 
 ## Stack
 - Express
 - Graphql (graphql, Apollo-graphql)
+- Json web tokens
